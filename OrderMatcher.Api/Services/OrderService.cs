@@ -114,5 +114,10 @@ public class OrderService : IOrderService
         await _db.SaveChangesAsync();
         return trades;
     }
+
+    public Task<OrderBookResponse> GetOrderBookAsync(string symbol)
+    {
+        throw new NotImplementedException();
+    }
 }
 
