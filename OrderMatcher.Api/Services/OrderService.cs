@@ -31,6 +31,8 @@ public class OrderService : IOrderService
         _db.Orders.Add(order);
         await _db.SaveChangesAsync();
 
+        await MatchAndSettleAsync(order);
+
         return new OrderResponse
         {
             Id = order.Id,
