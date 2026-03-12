@@ -27,4 +27,11 @@ public class OrdersController : ControllerBase
     {
         throw new NotImplementedException();
     }
+
+    [HttpGet("orderbook/{symbol}")]
+    public async Task<IActionResult> GetOrderBook(string symbol)
+    {
+        var book = await _orderService.GetOrderBookAsync(symbol);
+        return Ok(book);
+    }
 }
