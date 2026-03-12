@@ -46,6 +46,11 @@ public class OrderService : IOrderService
         };
     }
 
+    public Task<OrderResponse?> GetOrderAsync(Guid id)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<IEnumerable<Order>> FindMatchesAsync(Order incomingOrder)
     {
         var eligibleStatuses = new[] { OrderStatus.Open, OrderStatus.PartiallyFilled };

@@ -6,6 +6,7 @@ namespace OrderMatcher.Api.Services;
 public interface IOrderService
 {
     Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request);
+    Task<OrderResponse?> GetOrderAsync(Guid id);
     Task<IEnumerable<Order>> FindMatchesAsync(Order incomingOrder);
     Task<IEnumerable<Trade>> MatchAndSettleAsync(Order incomingOrder);
     Task<OrderBookResponse> GetOrderBookAsync(string symbol);

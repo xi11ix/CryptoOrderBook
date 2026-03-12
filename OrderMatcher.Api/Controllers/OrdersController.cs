@@ -22,7 +22,7 @@ public class OrdersController : ControllerBase
         return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("order/{id:guid}")]
     public IActionResult GetOrder(Guid id)
     {
         throw new NotImplementedException();
