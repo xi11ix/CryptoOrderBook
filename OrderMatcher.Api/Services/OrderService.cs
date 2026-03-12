@@ -66,4 +66,9 @@ public class OrderService : IOrderService
 
         return Task.FromResult(matches);
     }
+
+    public Task<IEnumerable<Trade>> MatchAndSettleAsync(Order incomingOrder)
+    {
+        throw new NotImplementedException();
+    }
 }
