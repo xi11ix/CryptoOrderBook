@@ -115,9 +115,39 @@ public class OrderService : IOrderService
         return trades;
     }
 
-    public Task<OrderBookResponse> GetOrderBookAsync(string symbol)
+    public async Task<OrderBookResponse> GetOrderBookAsync(string symbol)
     {
-        throw new NotImplementedException();
+        var eligibleStatuses = new[] { OrderStatus.Open, OrderStatus.PartiallyFilled };
+
+        var orders = await _db.Orders
+            .Where(o => o.Symbol == symbol && eligibleStatuses.Contains(o.Status))
+            .ToListAsync();
+
+        var bids = orders
+            .Where(o => o.Side == OrderSide.Buy)
+            .GroupBy(o => o.Price)
+            .OrderByDescending(g => g.Key)
+            .Select(g => new OrderBookLevel
+            {
+                Price = g.Key,
+                TotalQuantity = g.Sum(o => o.Quantity - o.FilledQuantity),
+                OrderCount = g.Count()
+            })
+            .ToList();
+
+        var asks = orders
+            .Where(o => o.Side == OrderSide.Sell)
+            .GroupBy(o => o.Price)
+            .OrderBy(g => g.Key)
+            .Select(g => new OrderBookLevel
+            {
+                Price = g.Key,
+                TotalQuantity = g.Sum(o => o.Quantity - o.FilledQuantity),
+                OrderCount = g.Count()
+            })
+            .ToList();
+
+        return new OrderBookResponse { Symbol = symbol, Bids = bids, Asks = asks };
     }
 }
 
