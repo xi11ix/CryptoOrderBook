@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using OrderMatcher.Api.Data;
 using OrderMatcher.Api.DTOs;
 using OrderMatcher.Api.Models;
 using OrderMatcher.Api.Services;
@@ -19,7 +21,15 @@ public class FindMatchesTests
 
     public FindMatchesTests()
     {
-        _service = new OrderService();
+        _service = CreateService();
+    }
+
+    private static OrderService CreateService()
+    {
+        var options = new DbContextOptionsBuilder<OrderMatcherDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new OrderService(new OrderMatcherDbContext(options));
     }
 
     private Task<OrderResponse> SeedAsync(string symbol, OrderSide side, decimal price, decimal quantity = 1.0m)

@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using OrderMatcher.Api.Data;
 using OrderMatcher.Api.DTOs;
 using OrderMatcher.Api.Models;
 using OrderMatcher.Api.Services;
@@ -16,7 +18,13 @@ namespace OrderMatcher.Tests.Orders;
 /// </summary>
 public class MatchAndSettleTests
 {
-    private IOrderService NewService() => new OrderService();
+    private static IOrderService NewService()
+    {
+        var options = new DbContextOptionsBuilder<OrderMatcherDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new OrderService(new OrderMatcherDbContext(options));
+    }
 
     private Task<OrderResponse> SeedAsync(IOrderService svc, string symbol, OrderSide side, decimal price, decimal quantity = 1.0m)
         => svc.CreateOrderAsync(new CreateOrderRequest

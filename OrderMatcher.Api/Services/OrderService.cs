@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using OrderMatcher.Api.Data;
 using OrderMatcher.Api.DTOs;
 using OrderMatcher.Api.Models;
 
@@ -5,9 +7,14 @@ namespace OrderMatcher.Api.Services;
 
 public class OrderService : IOrderService
 {
-    private readonly List<Order> _orders = new();
+    private readonly OrderMatcherDbContext _db;
 
-    public Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request)
+    public OrderService(OrderMatcherDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task<OrderResponse> CreateOrderAsync(CreateOrderRequest request)
     {
         var order = new Order
         {
@@ -21,7 +28,10 @@ public class OrderService : IOrderService
             CreatedAt = DateTime.UtcNow
         };
 
-        var response = new OrderResponse
+        _db.Orders.Add(order);
+        await _db.SaveChangesAsync();
+
+        return new OrderResponse
         {
             Id = order.Id,
             Symbol = order.Symbol,
@@ -32,45 +42,40 @@ public class OrderService : IOrderService
             Status = order.Status,
             CreatedAt = order.CreatedAt
         };
-
-        _orders.Add(order);
-        return Task.FromResult(response);
     }
 
-    public Task<IEnumerable<Order>> FindMatchesAsync(Order incomingOrder)
+    public async Task<IEnumerable<Order>> FindMatchesAsync(Order incomingOrder)
     {
         var eligibleStatuses = new[] { OrderStatus.Open, OrderStatus.PartiallyFilled };
 
-        IEnumerable<Order> matches;
-
         if (incomingOrder.Side == OrderSide.Buy)
         {
-            matches = _orders
+            return await _db.Orders
                 .Where(o => o.Symbol == incomingOrder.Symbol
                          && o.Side == OrderSide.Sell
                          && eligibleStatuses.Contains(o.Status)
                          && o.Price <= incomingOrder.Price)
                 .OrderBy(o => o.Price)
-                .ThenBy(o => o.CreatedAt);
+                .ThenBy(o => o.CreatedAt)
+                .ToListAsync();
         }
         else
         {
-            matches = _orders
+            return await _db.Orders
                 .Where(o => o.Symbol == incomingOrder.Symbol
                          && o.Side == OrderSide.Buy
                          && eligibleStatuses.Contains(o.Status)
                          && o.Price >= incomingOrder.Price)
                 .OrderByDescending(o => o.Price)
-                .ThenBy(o => o.CreatedAt);
+                .ThenBy(o => o.CreatedAt)
+                .ToListAsync();
         }
-
-        return Task.FromResult(matches);
     }
 
-    public Task<IEnumerable<Trade>> MatchAndSettleAsync(Order incomingOrder)
+    public async Task<IEnumerable<Trade>> MatchAndSettleAsync(Order incomingOrder)
     {
         var trades = new List<Trade>();
-        var matches = FindMatchesAsync(incomingOrder).Result.ToList();
+        var matches = await FindMatchesAsync(incomingOrder);
 
         foreach (var bookOrder in matches)
         {
@@ -81,7 +86,7 @@ public class OrderService : IOrderService
             var bookRemaining = bookOrder.Quantity - bookOrder.FilledQuantity;
             var fillQty = Math.Min(incomingRemaining, bookRemaining);
 
-            trades.Add(new Trade
+            var trade = new Trade
             {
                 Id = Guid.NewGuid(),
                 Symbol = incomingOrder.Symbol,
@@ -90,7 +95,10 @@ public class OrderService : IOrderService
                 Price = bookOrder.Price,
                 Quantity = fillQty,
                 ExecutedAt = DateTime.UtcNow
-            });
+            };
+
+            trades.Add(trade);
+            _db.Trades.Add(trade);
 
             bookOrder.FilledQuantity += fillQty;
             bookOrder.Status = bookOrder.FilledQuantity >= bookOrder.Quantity
@@ -103,6 +111,8 @@ public class OrderService : IOrderService
                 : OrderStatus.PartiallyFilled;
         }
 
-        return Task.FromResult<IEnumerable<Trade>>(trades);
+        await _db.SaveChangesAsync();
+        return trades;
     }
 }
+

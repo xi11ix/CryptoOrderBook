@@ -2,6 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using OrderMatcher.Api.Data;
 using OrderMatcher.Api.DTOs;
 using OrderMatcher.Api.Models;
 
@@ -13,7 +16,19 @@ public class CreateOrderTests : IClassFixture<WebApplicationFactory<Program>>
 
     public CreateOrderTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.CreateClient();
+        _client = factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(DbContextOptions<OrderMatcherDbContext>));
+                if (descriptor != null)
+                    services.Remove(descriptor);
+
+                services.AddDbContext<OrderMatcherDbContext>(options =>
+                    options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+            });
+        }).CreateClient();
     }
 
     [Fact]
