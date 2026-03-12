@@ -69,6 +69,40 @@ public class OrderService : IOrderService
 
     public Task<IEnumerable<Trade>> MatchAndSettleAsync(Order incomingOrder)
     {
-        throw new NotImplementedException();
+        var trades = new List<Trade>();
+        var matches = FindMatchesAsync(incomingOrder).Result.ToList();
+
+        foreach (var bookOrder in matches)
+        {
+            if (incomingOrder.FilledQuantity >= incomingOrder.Quantity)
+                break;
+
+            var incomingRemaining = incomingOrder.Quantity - incomingOrder.FilledQuantity;
+            var bookRemaining = bookOrder.Quantity - bookOrder.FilledQuantity;
+            var fillQty = Math.Min(incomingRemaining, bookRemaining);
+
+            trades.Add(new Trade
+            {
+                Id = Guid.NewGuid(),
+                Symbol = incomingOrder.Symbol,
+                BuyOrderId = incomingOrder.Side == OrderSide.Buy ? incomingOrder.Id : bookOrder.Id,
+                SellOrderId = incomingOrder.Side == OrderSide.Sell ? incomingOrder.Id : bookOrder.Id,
+                Price = bookOrder.Price,
+                Quantity = fillQty,
+                ExecutedAt = DateTime.UtcNow
+            });
+
+            bookOrder.FilledQuantity += fillQty;
+            bookOrder.Status = bookOrder.FilledQuantity >= bookOrder.Quantity
+                ? OrderStatus.Filled
+                : OrderStatus.PartiallyFilled;
+
+            incomingOrder.FilledQuantity += fillQty;
+            incomingOrder.Status = incomingOrder.FilledQuantity >= incomingOrder.Quantity
+                ? OrderStatus.Filled
+                : OrderStatus.PartiallyFilled;
+        }
+
+        return Task.FromResult<IEnumerable<Trade>>(trades);
     }
 }
