@@ -12,7 +12,7 @@ AI greatly increased the speed at which I was able to complete this project. It 
 
 ## Examples Of Where I Corrected The AI
 
-I changed the endpoint names to make more sense than what the AI originally generated.
+I changed the endpoint names to make more sense than what the AI originally generated. When the AI initially created the project it used dotnet 7. I asked it to switch the project to dotnet 8 because 7 is no longer supported.
 
 ## Code Or Tests Written Without AI
 
