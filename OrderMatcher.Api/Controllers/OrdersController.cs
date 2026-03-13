@@ -23,9 +23,12 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("order/{id:guid}")]
-    public IActionResult GetOrder(Guid id)
+    public async Task<IActionResult> GetOrder(Guid id)
     {
-        throw new NotImplementedException();
+        var order = await _orderService.GetOrderAsync(id);
+        if (order is null)
+            return NotFound();
+        return Ok(order);
     }
 
     [HttpGet("orderbook/{symbol}")]
