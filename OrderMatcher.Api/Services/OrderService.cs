@@ -71,25 +71,29 @@ public class OrderService : IOrderService
 
         if (incomingOrder.Side == OrderSide.Buy)
         {
-            return await _db.Orders
+            var candidates = await _db.Orders
                 .Where(o => o.Symbol == incomingOrder.Symbol
                          && o.Side == OrderSide.Sell
-                         && eligibleStatuses.Contains(o.Status)
-                         && o.Price <= incomingOrder.Price)
-                .OrderBy(o => o.Price)
-                .ThenBy(o => o.CreatedAt)
+                         && eligibleStatuses.Contains(o.Status))
                 .ToListAsync();
+
+            return candidates
+                .Where(o => o.Price <= incomingOrder.Price)
+                .OrderBy(o => o.Price)
+                .ThenBy(o => o.CreatedAt);
         }
         else
         {
-            return await _db.Orders
+            var candidates = await _db.Orders
                 .Where(o => o.Symbol == incomingOrder.Symbol
                          && o.Side == OrderSide.Buy
-                         && eligibleStatuses.Contains(o.Status)
-                         && o.Price >= incomingOrder.Price)
-                .OrderByDescending(o => o.Price)
-                .ThenBy(o => o.CreatedAt)
+                         && eligibleStatuses.Contains(o.Status))
                 .ToListAsync();
+
+            return candidates
+                .Where(o => o.Price >= incomingOrder.Price)
+                .OrderByDescending(o => o.Price)
+                .ThenBy(o => o.CreatedAt);
         }
     }
 
