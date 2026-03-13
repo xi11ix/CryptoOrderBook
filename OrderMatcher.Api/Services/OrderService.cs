@@ -46,9 +46,23 @@ public class OrderService : IOrderService
         };
     }
 
-    public Task<OrderResponse?> GetOrderAsync(Guid id)
+    public async Task<OrderResponse?> GetOrderAsync(Guid id)
     {
-        throw new NotImplementedException();
+        var order = await _db.Orders.FindAsync(id);
+        if (order is null)
+            return null;
+
+        return new OrderResponse
+        {
+            Id = order.Id,
+            Symbol = order.Symbol,
+            Side = order.Side,
+            Price = order.Price,
+            Quantity = order.Quantity,
+            FilledQuantity = order.FilledQuantity,
+            Status = order.Status,
+            CreatedAt = order.CreatedAt
+        };
     }
 
     public async Task<IEnumerable<Order>> FindMatchesAsync(Order incomingOrder)
