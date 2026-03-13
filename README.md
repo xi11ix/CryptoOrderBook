@@ -39,14 +39,14 @@ The API starts on `http://localhost:5272` by default. A SQLite database file (`o
 ```bash
 curl -X POST http://localhost:5272/orders \
   -H "Content-Type: application/json" \
-  -d '{"symbol":"BTC/USD","side":1,"price":50000,"quantity":1.5}'
+  -d '{"symbol":"BTCUSD","side":1,"price":50000,"quantity":1.5}'
 ```
 
 **Place a matching buy order:**
 ```bash
 curl -X POST http://localhost:5272/orders \
   -H "Content-Type: application/json" \
-  -d '{"symbol":"BTC/USD","side":0,"price":50000,"quantity":1.0}'
+  -d '{"symbol":"BTCUSD","side":0,"price":50000,"quantity":1.0}'
 ```
 
 **Get the order by ID:**
@@ -56,7 +56,7 @@ curl http://localhost:5272/orders/order/<id>
 
 **Get the order book:**
 ```bash
-curl http://localhost:5272/orders/orderbook/BTC/USD
+curl http://localhost:5272/orders/orderbook/BTCUSD
 ```
 
 `side`: `0` = Buy, `1` = Sell
